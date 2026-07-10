@@ -1,0 +1,27 @@
+pub type Layout {
+  Normal
+  Split
+  Flip
+  Transform
+  ModalDoubleFacedCard
+  Meld
+  Leveler
+  Class
+  Case
+  Saga
+  Adventure
+  Prepare
+  Mutate
+  Prototype
+  Battle
+  Planar
+  Scheme
+  Vanguard
+  Token
+  DoubleFacedToken
+  Emblem
+  Augment
+  Host
+  ArtSeries
+  ReversibleCard
+}
