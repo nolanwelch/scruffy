@@ -1,5 +1,6 @@
 import gleam/option.{type Option}
-import scruffy/common.{type Uri, type Uuid}
+import gleam/uri.{type Uri}
+import scruffy/common.{type Uuid}
 
 pub type Tag {
   Tag(
