@@ -1,0 +1,21 @@
+pub type Language {
+  English
+  Spanish
+  French
+  German
+  Italian
+  Portuguese
+  Japanese
+  Korean
+  Russian
+  SimplifiedChinese
+  TraditionalChinese
+  Hebrew
+  Latin
+  AncientGreek
+  Arabic
+  Sanskrit
+  Phyrexian
+  Quenya
+  Dwarvish
+}
