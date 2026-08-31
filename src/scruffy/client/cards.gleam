@@ -94,14 +94,14 @@ pub fn get_random_card(q: Option(String)) -> Option(Card) {
 /// A way of identifying a single card within a `get_card_collection`
 /// request.
 pub type CardIdentifier {
-  ById(Uuid)
-  ByMtgoId(Int)
-  ByMultiverseId(Int)
-  ByOracleId(Uuid)
-  ByIllustrationId(Uuid)
-  ByName(String)
-  ByNameAndSet(name: String, set: String)
-  ByCollectorNumber(set: String, collector_number: String)
+  IdentifierById(Uuid)
+  IdentifierByMtgoId(Int)
+  IdentifierByMultiverseId(Int)
+  IdentifierByOracleId(Uuid)
+  IdentifierByIllustrationId(Uuid)
+  IdentifierByName(String)
+  IdentifierByNameAndSet(name: String, set: String)
+  IdentifierByCollectorNumber(set: String, collector_number: String)
 }
 
 /// The response to a `get_card_collection` request: the cards that were
