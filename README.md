@@ -10,8 +10,10 @@ Gathering API.
 
 `scruffy` is under early development. So far it provides Gleam types for
 the objects the Scryfall API returns (cards, sets, rulings, symbols, and
-more) under `scruffy/*`. Request functions and JSON decoders for calling
-the API and turning its responses into these types are still to come.
+more) under `scruffy/*`, along with a [Glon](https://hexdocs.pm/glon/)
+`*_schema()` decoder for each one — e.g. `card.card_schema()` turns a card
+JSON string into a `Card` via `glon.decode(card.card_schema(), from: json)`.
+Request functions for calling the API itself are still to come.
 
 ## Installation
 

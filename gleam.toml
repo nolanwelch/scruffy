@@ -9,6 +9,7 @@ repository = { type = "github", user = "nolanwelch", repo = "scruffy" }
 
 [dependencies]
 gleam_stdlib = ">= 1.0.0 and < 2.0.0"
+glon = ">= 1.0.0 and < 2.0.0"
 
 [dev_dependencies]
 gleeunit = ">= 1.0.0 and < 2.0.0"
