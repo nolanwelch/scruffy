@@ -13,14 +13,12 @@ pub type BulkData {
     id: Uuid,
     uri: Uri,
     bulk_data_type: BulkDataType,
-    name: String,
-    description: String,
-    download_uri: Uri,
     // updated_at represents a Unix timestamp in seconds for now.
     updated_at: Int,
-    size: Int,
-    content_type: String,
-    content_encoding: String,
+    name: String,
+    description: String,
+    jsonl_download_uri: Uri,
+    compressed_size: Int,
   )
 }
 
@@ -31,4 +29,6 @@ pub type BulkDataType {
   DefaultCards
   AllCards
   Rulings
+  ArtTags
+  OracleTags
 }
