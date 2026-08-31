@@ -1,3 +1,8 @@
+//// Types describing Scryfall's Card object and the smaller types it is
+//// made up of.
+////
+//// See https://scryfall.com/docs/api/cards for the upstream reference.
+
 import gleam/option.{type Option}
 import gleam/uri.{type Uri}
 import glon
@@ -9,6 +14,7 @@ import scruffy/image.{type ImageStatus, type ImageUris}
 import scruffy/language.{type Language}
 import scruffy/layout.{type Layout}
 
+/// A single Magic: The Gathering card, as returned by the Scryfall API.
 pub type Card {
   Card(
     arena_id: Option(Int),
@@ -306,6 +312,7 @@ pub fn card_schema() -> glon.JsonSchema(Card) {
   ))
 }
 
+/// A card's legal status in a particular format.
 pub type CardLegality {
   Legal
   NotLegal
@@ -406,6 +413,7 @@ pub fn legalities_schema() -> glon.JsonSchema(Legalities) {
   ))
 }
 
+/// One face of a multi-faced card (e.g. a transform or split card).
 pub type CardFace {
   CardFace(
     artist: Option(String),
@@ -485,6 +493,7 @@ pub fn card_face_schema() -> glon.JsonSchema(CardFace) {
   ))
 }
 
+/// A reference to a card related to this one, such as a token it creates.
 pub type RelatedCardObject {
   RelatedCardObject(
     id: Uuid,
@@ -504,6 +513,7 @@ pub fn related_card_object_schema() -> glon.JsonSchema(RelatedCardObject) {
   glon.success(RelatedCardObject(id:, component:, name:, type_line:, uri:))
 }
 
+/// How a `RelatedCardObject` relates to the card that references it.
 pub type RelatedCardComponent {
   Token
   MeldPart
@@ -520,6 +530,7 @@ pub fn related_card_component_schema() -> glon.JsonSchema(RelatedCardComponent) 
   ])
 }
 
+/// The color of a card's border.
 pub type CardBorderColor {
   Black
   White
@@ -540,6 +551,7 @@ pub fn card_border_color_schema() -> glon.JsonSchema(CardBorderColor) {
   ])
 }
 
+/// A physical finish a card printing is available in.
 pub type CardFinish {
   Foil
   NonFoil
@@ -554,6 +566,7 @@ pub fn card_finish_schema() -> glon.JsonSchema(CardFinish) {
   ])
 }
 
+/// A card's prices in various currencies, as decimal strings.
 pub type CardPrice {
   CardPrice(
     usd: Option(String),
@@ -630,6 +643,7 @@ pub fn related_uris_schema() -> glon.JsonSchema(RelatedUris) {
   ))
 }
 
+/// A card's rarity.
 pub type CardRarity {
   Common
   Uncommon
@@ -650,6 +664,7 @@ pub fn card_rarity_schema() -> glon.JsonSchema(CardRarity) {
   ])
 }
 
+/// The security stamp printed on a card, if any.
 pub type SecurityStamp {
   Oval
   Triangle
@@ -670,6 +685,8 @@ pub fn security_stamp_schema() -> glon.JsonSchema(SecurityStamp) {
   ])
 }
 
+/// Details of a card's preview / spoiler, if it was previewed before its
+/// set released.
 pub type CardPreview {
   CardPreview(
     previewed_at: Option(Int),

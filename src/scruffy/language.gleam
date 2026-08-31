@@ -1,5 +1,8 @@
+//// A type describing the languages Magic cards have been printed in.
+
 import glon
 
+/// A language a card has been printed in.
 pub type Language {
   English
   Spanish

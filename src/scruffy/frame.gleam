@@ -1,5 +1,9 @@
+//// Types describing a card's frame — the version of Magic's card layout it
+//// was printed with, and any special visual effects applied to it.
+
 import glon
 
+/// The version of the card frame a printing uses.
 pub type Frame {
   Y1993
   Y1997
@@ -18,6 +22,7 @@ pub fn frame_schema() -> glon.JsonSchema(Frame) {
   ])
 }
 
+/// A special visual effect applied to a card's frame.
 pub type FrameEffect {
   Legendary
   Miracle
@@ -67,6 +72,7 @@ pub fn frame_effect_schema() -> glon.JsonSchema(FrameEffect) {
   ])
 }
 
+/// The specific two-sided frame effect used by a `DualFaced` card.
 pub type DualFacedFrameEffect {
   SunMoon
   CompassLand

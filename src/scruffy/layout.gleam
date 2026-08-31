@@ -1,5 +1,8 @@
+//// A type describing the physical layouts a card can be printed in.
+
 import glon
 
+/// The physical layout of a card, such as `Split` or `Transform`.
 pub type Layout {
   Normal
   Split

@@ -1,8 +1,11 @@
+//// Small types shared across several Scryfall object types.
+
 import gleam/int
 import gleam/string
 import gleam/uri.{type Uri}
 import glon
 
+/// A UUID, as used for Scryfall's various object IDs.
 pub type Uuid =
   String
 

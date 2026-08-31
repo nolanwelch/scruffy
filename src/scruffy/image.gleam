@@ -1,8 +1,11 @@
+//// A type describing the quality of images available for a card printing.
+
 import gleam/option.{type Option}
 import gleam/uri.{type Uri}
 import glon
 import scruffy/common
 
+/// The quality of images Scryfall has available for a card printing.
 pub type ImageStatus {
   Missing
   Placeholder

@@ -8,21 +8,13 @@ import scruffy/catalog
 import scruffy/error
 import scruffy/frame
 import scruffy/layout
-import scruffy/list as scryfall_list
 import scruffy/migrations
 import scruffy/ruling
+import scruffy/scryfall_list
 import scruffy/set
 
 pub fn main() -> Nil {
   gleeunit.main()
-}
-
-// gleeunit test functions end in `_test`
-pub fn hello_world_test() {
-  let name = "Joe"
-  let greeting = "Hello, " <> name <> "!"
-
-  assert greeting == "Hello, Joe!"
 }
 
 // The JSON fixtures below are trimmed, real responses from the live

@@ -1,9 +1,16 @@
+//// A type describing Scryfall's Card Symbol object, used to render mana
+//// costs, the tap symbol, and other symbols found in oracle text.
+////
+//// See https://scryfall.com/docs/api/card-symbols for the upstream reference.
+
 import gleam/option.{type Option}
 import gleam/uri.{type Uri}
 import glon
 import scruffy/color.{type Color}
 import scruffy/common
 
+/// A symbol that can appear in a card's mana cost or oracle text, such as
+/// `{T}` or `{2/W}`.
 pub type CardSymbol {
   CardSymbol(
     symbol: String,

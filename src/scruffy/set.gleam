@@ -1,8 +1,14 @@
+//// A type describing Scryfall's Set object, a group of related Magic cards
+//// such as an expansion or a promotional set.
+////
+//// See https://scryfall.com/docs/api/sets for the upstream reference.
+
 import gleam/option.{type Option}
 import gleam/uri.{type Uri}
 import glon
 import scruffy/common.{type Uuid}
 
+/// A Magic: The Gathering set.
 pub type Set {
   Set(
     id: Uuid,
@@ -74,6 +80,7 @@ pub fn set_schema() -> glon.JsonSchema(Set) {
   ))
 }
 
+/// The category a set belongs to.
 pub type SetType {
   Core
   Expansion

@@ -1,6 +1,12 @@
+//// A type describing Scryfall's Ruling object, an official ruling on how a
+//// card's rules text works.
+////
+//// See https://scryfall.com/docs/api/rulings for the upstream reference.
+
 import glon
 import scruffy/common.{type Uuid}
 
+/// An official ruling clarifying how a card works.
 pub type Ruling {
   Ruling(
     oracle_id: Uuid,
@@ -19,6 +25,7 @@ pub fn ruling_schema() -> glon.JsonSchema(Ruling) {
   glon.success(Ruling(oracle_id:, source:, published_at:, comment:))
 }
 
+/// Who issued a ruling.
 pub type RulingSource {
   Wotc
   Scryfall

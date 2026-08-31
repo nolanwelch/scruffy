@@ -1,8 +1,15 @@
+//// A type describing Scryfall's Card Migration object, used to track when
+//// one Scryfall card ID replaces another.
+////
+//// See https://scryfall.com/docs/api/migrations for the upstream reference.
+
 import gleam/option.{type Option}
 import gleam/uri.{type Uri}
 import glon
 import scruffy/common.{type Uuid}
 
+/// A record of a Scryfall card ID being merged into or deleted in favor of
+/// another.
 pub type CardMigration {
   CardMigration(
     uri: Uri,
@@ -40,6 +47,7 @@ pub fn card_migration_schema() -> glon.JsonSchema(CardMigration) {
   ))
 }
 
+/// How a migration should be applied to references to the old card ID.
 pub type MigrationStrategy {
   Merge
   Delete
@@ -49,6 +57,7 @@ pub fn migration_strategy_schema() -> glon.JsonSchema(MigrationStrategy) {
   glon.enum_map([#("merge", Merge), #("delete", Delete)])
 }
 
+/// Identifying details of the card a migration applies to.
 pub type MigrationMetadata {
   MigrationMetadata(
     id: Option(Uuid),
