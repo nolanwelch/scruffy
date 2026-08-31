@@ -5,3 +5,4 @@
 //// cards, sets, rulings, symbols, and the other resources it exposes.
 //// Request functions and JSON decoders that turn API responses into these
 //// types are on the roadmap.
+
