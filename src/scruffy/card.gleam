@@ -1,3 +1,8 @@
+//// Types describing Scryfall's Card object and the smaller types it is
+//// made up of.
+////
+//// See https://scryfall.com/docs/api/cards for the upstream reference.
+
 import gleam/option.{type Option}
 import gleam/uri.{type Uri}
 import scruffy/color.{type Color}
@@ -8,6 +13,7 @@ import scruffy/image.{type ImageStatus}
 import scruffy/language.{type Language}
 import scruffy/layout.{type Layout}
 
+/// A single Magic: The Gathering card, as returned by the Scryfall API.
 pub type Card {
   Card(
     arena_id: Option(Int),
@@ -100,6 +106,7 @@ pub type Card {
   )
 }
 
+/// A card's legal status in a particular format.
 pub type CardLegality {
   Legal
   NotLegal
@@ -107,6 +114,7 @@ pub type CardLegality {
   Banned
 }
 
+/// One face of a multi-faced card (e.g. a transform or split card).
 pub type CardFace {
   CardFace(
     artist: Option(String),
@@ -134,6 +142,7 @@ pub type CardFace {
   )
 }
 
+/// A reference to a card related to this one, such as a token it creates.
 pub type RelatedCardObject {
   RelatedCardObject(
     id: Uuid,
@@ -144,6 +153,7 @@ pub type RelatedCardObject {
   )
 }
 
+/// How a `RelatedCardObject` relates to the card that references it.
 pub type RelatedCardComponent {
   Token
   MeldPart
@@ -151,6 +161,7 @@ pub type RelatedCardComponent {
   ComboPiece
 }
 
+/// The color of a card's border.
 pub type CardBorderColor {
   Black
   White
@@ -160,12 +171,14 @@ pub type CardBorderColor {
   Gold
 }
 
+/// A physical finish a card printing is available in.
 pub type CardFinish {
   Foil
   NonFoil
   Etched
 }
 
+/// A card's prices in various currencies, as decimal strings.
 pub type CardPrice {
   CardPrice(
     usd: String,
@@ -178,6 +191,7 @@ pub type CardPrice {
   )
 }
 
+/// A card's rarity.
 pub type CardRarity {
   Common
   Uncommon
@@ -187,6 +201,7 @@ pub type CardRarity {
   Bonus
 }
 
+/// The security stamp printed on a card, if any.
 pub type SecurityStamp {
   Oval
   Triangle
@@ -196,6 +211,8 @@ pub type SecurityStamp {
   Heart
 }
 
+/// Details of a card's preview / spoiler, if it was previewed before its
+/// set released.
 pub type CardPreview {
   CardPreview(
     previewed_at: Option(Int),
