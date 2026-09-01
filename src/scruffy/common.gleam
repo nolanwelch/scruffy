@@ -1,6 +1,7 @@
 //// Small types shared across several Scryfall object types.
 
 import gleam/int
+import gleam/result
 import gleam/string
 import gleam/uri.{type Uri}
 import glon
@@ -55,6 +56,84 @@ pub fn date_to_unix_seconds(date: String) -> Result(Int, Nil) {
         _, _, _ -> Error(Nil)
       }
     }
+    _ -> Error(Nil)
+  }
+}
+
+/// A schema for RFC 3339 datetime strings such as
+/// `"2026-08-31T21:01:56.902+00:00"` (or with a trailing `"Z"`), decoded
+/// into a Unix timestamp in seconds. Fractional seconds are truncated.
+///
+/// Scryfall's Bulk Data objects currently model `updated_at` this way "for
+/// now", matching the `Int`-timestamp treatment `date_schema` gives plain
+/// dates elsewhere in the API.
+pub fn datetime_schema() -> glon.JsonSchema(Int) {
+  glon.string()
+  |> glon.map(fn(s) {
+    let assert Ok(seconds) = datetime_to_unix_seconds(s)
+    seconds
+  })
+}
+
+/// Parses an RFC 3339 datetime string into a Unix timestamp in seconds.
+pub fn datetime_to_unix_seconds(datetime: String) -> Result(Int, Nil) {
+  use #(date_part, time_part) <- result.try(string.split_once(datetime, "T"))
+  use day_seconds <- result.try(date_to_unix_seconds(date_part))
+  let #(time_of_day, offset) = split_time_and_offset(time_part)
+  use time_seconds <- result.try(parse_time_of_day(time_of_day))
+  use offset_seconds <- result.try(parse_offset(offset))
+  Ok(day_seconds + time_seconds - offset_seconds)
+}
+
+/// Splits an RFC 3339 time into its time-of-day and UTC offset, e.g.
+/// `"21:01:56.902+00:00"` into `#("21:01:56.902", "+00:00")`. A trailing
+/// `"Z"` is treated as a `"+00:00"` offset.
+fn split_time_and_offset(time_part: String) -> #(String, String) {
+  case string.split_once(time_part, "Z") {
+    Ok(#(time_of_day, "")) -> #(time_of_day, "+00:00")
+    _ ->
+      case string.split_once(time_part, "+") {
+        Ok(#(time_of_day, offset)) -> #(time_of_day, "+" <> offset)
+        Error(Nil) ->
+          case string.split_once(time_part, "-") {
+            Ok(#(time_of_day, offset)) -> #(time_of_day, "-" <> offset)
+            Error(Nil) -> #(time_part, "+00:00")
+          }
+      }
+  }
+}
+
+/// Parses a `"HH:MM:SS"` or `"HH:MM:SS.fff"` time-of-day into the number of
+/// seconds since midnight, discarding any fractional part.
+fn parse_time_of_day(time_of_day: String) -> Result(Int, Nil) {
+  let whole_seconds = case string.split_once(time_of_day, ".") {
+    Ok(#(whole, _fraction)) -> whole
+    Error(Nil) -> time_of_day
+  }
+
+  case string.split(whole_seconds, ":") {
+    [h, m, s] -> {
+      use hours <- result.try(int.parse(h))
+      use minutes <- result.try(int.parse(m))
+      use seconds <- result.try(int.parse(s))
+      Ok(hours * 3600 + minutes * 60 + seconds)
+    }
+    _ -> Error(Nil)
+  }
+}
+
+/// Parses a `"+HH:MM"` or `"-HH:MM"` UTC offset into a (possibly negative)
+/// number of seconds.
+fn parse_offset(offset: String) -> Result(Int, Nil) {
+  use #(sign, rest) <- result.try(string.pop_grapheme(offset))
+  use #(hours_str, minutes_str) <- result.try(string.split_once(rest, ":"))
+  use hours <- result.try(int.parse(hours_str))
+  use minutes <- result.try(int.parse(minutes_str))
+  let total_seconds = hours * 3600 + minutes * 60
+
+  case sign {
+    "+" -> Ok(total_seconds)
+    "-" -> Ok(-total_seconds)
     _ -> Error(Nil)
   }
 }
