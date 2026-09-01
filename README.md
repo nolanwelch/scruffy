@@ -4,7 +4,7 @@
 [![Hex Docs](https://img.shields.io/badge/hex-docs-ffaff3)](https://hexdocs.pm/scruffy/)
 
 A Gleam client for the [Scryfall](https://scryfall.com/docs/api) Magic: The
-Gathering API.
+Gathering API. Runs on both of Gleam's targets, Erlang and JavaScript.
 
 ## Status
 
@@ -15,8 +15,8 @@ Gathering API.
 `glon.decode(card.card_schema(), from: json)`.
 
 On top of that, `scruffy/client/*` gives you a function for every Scryfall
-endpoint that builds the request, sends it, and decodes the response for
-you -- call one and get back the object you asked for, or a
+endpoint that builds the request and decodes the response for you -- pass
+it your HTTP client and get back the object you asked for, or a
 `scruffy/client.ClientError` describing what went wrong.
 
 ## Installation
@@ -27,13 +27,20 @@ gleam add scruffy@1
 
 ## Usage
 
+`scruffy` never picks an HTTP client for you -- that's what keeps it usable
+from both targets -- so every function in `scruffy/client/*` takes a
+`Requester` as its first argument: a plain `fn(Request(String)) ->
+Result(Response(String), e)`. On Erlang, that's
+[`gleam_httpc`](https://hexdocs.pm/gleam_httpc/)'s `send`, unchanged:
+
 ```gleam
+import gleam/httpc
 import gleam/io
 import scruffy/client
 import scruffy/client/cards
 
 pub fn main() -> Nil {
-  case cards.get_card_by_id("bd8fa327-dd41-4737-8f19-2cf5eb1f7cdd") {
+  case cards.get_card_by_id(httpc.send, "bd8fa327-dd41-4737-8f19-2cf5eb1f7cdd") {
     Ok(card) -> io.println(card.name)
     Error(client.ApiError(err)) -> io.println("Scryfall said: " <> err.details)
     Error(_) -> io.println("Something else went wrong")
@@ -41,19 +48,21 @@ pub fn main() -> Nil {
 }
 ```
 
-`scruffy/client` sends requests with
-[`gleam_httpc`](https://hexdocs.pm/gleam_httpc/), Gleam's binding to
-Erlang's built-in HTTP client, so `scruffy` targets Erlang. If you'd rather
-send requests some other way, build one with `scruffy/client/request` and
-decode the response body yourself with the matching `*_schema()` from
-`scruffy/*`.
+A `Requester` has to return its response synchronously, which rules out
+Promise-based clients such as
+[`gleam_fetch`](https://hexdocs.pm/gleam_fetch/) on the JavaScript target.
+There, skip `scruffy/client/*` and its `send`: build the request with
+`scruffy/client/request`, `await` your own client's response, and decode
+its body with the matching `*_schema()` from `scruffy/*` and
+`glon.decode`.
 
 Further documentation can be found at <https://hexdocs.pm/scruffy>.
 
 ## Development
 
 ```sh
-gleam test    # Run the tests, including integration tests that call the
-              # live Scryfall API -- you'll need network access
+gleam test    # Run the tests. The integration suite (test/scruffy_integration_test.gleam)
+              # calls the live Scryfall API via gleam_httpc, so it needs network access and
+              # only runs on the Erlang target -- `gleam test --target javascript` skips it.
 gleam format  # Format the source
 ```

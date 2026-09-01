@@ -9,10 +9,10 @@ repository = { type = "github", user = "nolanwelch", repo = "scruffy" }
 
 [dependencies]
 gleam_http = ">= 4.0.0 and < 5.0.0"
-gleam_httpc = ">= 5.0.0 and < 6.0.0"
 gleam_json = ">= 3.0.0 and < 4.0.0"
 gleam_stdlib = ">= 1.0.0 and < 2.0.0"
 glon = ">= 1.0.0 and < 2.0.0"
 
 [dev_dependencies]
+gleam_httpc = ">= 5.0.0 and < 6.0.0"
 gleeunit = ">= 1.0.0 and < 2.0.0"
