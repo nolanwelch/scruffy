@@ -28,19 +28,22 @@ gleam add scruffy@1
 ## Usage
 
 `scruffy` never picks an HTTP client for you -- that's what keeps it usable
-from both targets -- so every function in `scruffy/client/*` takes a
-`Requester` as its first argument: a plain `fn(Request(String)) ->
-Result(Response(String), e)`. On Erlang, that's
+from both targets. Instead, call `new` once with a `Requester` -- a plain
+`fn(Request(String)) -> Result(Response(String), e)` -- and get back every
+endpoint function already wired up to it, grouped the way Scryfall groups
+its own endpoints. On Erlang, a `Requester` is
 [`gleam_httpc`](https://hexdocs.pm/gleam_httpc/)'s `send`, unchanged:
 
 ```gleam
 import gleam/httpc
 import gleam/io
+import scruffy
 import scruffy/client
-import scruffy/client/cards
 
 pub fn main() -> Nil {
-  case cards.get_card_by_id(httpc.send, "bd8fa327-dd41-4737-8f19-2cf5eb1f7cdd") {
+  let scryfall = scruffy.new(httpc.send)
+
+  case scryfall.cards.get_card_by_id("bd8fa327-dd41-4737-8f19-2cf5eb1f7cdd") {
     Ok(card) -> io.println(card.name)
     Error(client.ApiError(err)) -> io.println("Scryfall said: " <> err.details)
     Error(_) -> io.println("Something else went wrong")
@@ -48,12 +51,17 @@ pub fn main() -> Nil {
 }
 ```
 
+Prefer a one-off call over building a `Client`? Every function backing it
+is also exported directly from its `scruffy/client/*` module, taking the
+`Requester` as its first argument: `cards.get_card_by_id(httpc.send, id)`
+does the same thing as `scryfall.cards.get_card_by_id(id)` above.
+
 A `Requester` has to return its response synchronously, which rules out
 Promise-based clients such as
 [`gleam_fetch`](https://hexdocs.pm/gleam_fetch/) on the JavaScript target.
-There, skip `scruffy/client/*` and its `send`: build the request with
-`scruffy/client/request`, `await` your own client's response, and decode
-its body with the matching `*_schema()` from `scruffy/*` and
+There, skip `scruffy`/`scruffy/client/*` and their `send`: build the
+request with `scruffy/client/request`, `await` your own client's response,
+and decode its body with the matching `*_schema()` from `scruffy/*` and
 `glon.decode`.
 
 Further documentation can be found at <https://hexdocs.pm/scruffy>.

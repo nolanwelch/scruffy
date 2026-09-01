@@ -33,6 +33,9 @@ import scruffy/client/catalogs
 @target(erlang)
 import scruffy/client/migrations
 
+@target(erlang)
+import scruffy
+
 // Black Lotus (Vintage Masters) -- a real card whose Scryfall ID is stable.
 @target(erlang)
 const black_lotus_id = "bd8fa327-dd41-4737-8f19-2cf5eb1f7cdd"
@@ -126,6 +129,26 @@ pub fn get_bulk_data_by_type_test() {
 @target(erlang)
 pub fn list_migrations_test() {
   let assert Ok(list) = migrations.list_migrations(httpc.send, option.Some(1))
+  assert list.data != []
+}
+
+@target(erlang)
+pub fn scruffy_new_test() {
+  // The `new(requester)` factories: call once, get every function back
+  // already wired up, no `requester` at the call site.
+  let scryfall = scruffy.new(httpc.send)
+
+  let assert Ok(c) = scryfall.cards.get_card_by_id(black_lotus_id)
+  assert c.name == "Black Lotus"
+
+  let assert Ok(cat) = scryfall.catalogs.get_card_names()
+  assert cat.total_values > 0
+
+  let assert Ok(data) =
+    scryfall.bulk_data.get_bulk_data_by_type(bulk_data_type.OracleCards)
+  assert data.bulk_data_type == bulk_data_type.OracleCards
+
+  let assert Ok(list) = scryfall.migrations.list_migrations(option.Some(1))
   assert list.data != []
 }
 

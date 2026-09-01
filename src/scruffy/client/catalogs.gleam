@@ -3,7 +3,9 @@
 //// Each function builds its request with `scruffy/client/request` and
 //// sends it with the `client.Requester` you provide, so what comes back
 //// is already the decoded `Catalog` -- or a `client.ClientError`
-//// describing what went wrong.
+//// describing what went wrong. Call `new` once with your `Requester` to
+//// get a `Client` back with all of them already wired up, if you'd rather
+//// not pass one at every call site.
 ////
 //// See https://scryfall.com/docs/api/catalogs for the upstream reference.
 
@@ -162,4 +164,58 @@ pub fn get_watermarks(
   requester: Requester(e),
 ) -> Result(Catalog(String), ClientError(e)) {
   get_catalog(requester, "watermarks")
+}
+
+/// Every function above, already wired up to a `Requester` -- see `new`.
+pub type Client(e) {
+  Client(
+    get_card_names: fn() -> Result(Catalog(String), ClientError(e)),
+    get_artist_names: fn() -> Result(Catalog(String), ClientError(e)),
+    get_word_bank: fn() -> Result(Catalog(String), ClientError(e)),
+    get_supertypes: fn() -> Result(Catalog(String), ClientError(e)),
+    get_card_types: fn() -> Result(Catalog(String), ClientError(e)),
+    get_artifact_types: fn() -> Result(Catalog(String), ClientError(e)),
+    get_battle_types: fn() -> Result(Catalog(String), ClientError(e)),
+    get_creature_types: fn() -> Result(Catalog(String), ClientError(e)),
+    get_enchantment_types: fn() -> Result(Catalog(String), ClientError(e)),
+    get_land_types: fn() -> Result(Catalog(String), ClientError(e)),
+    get_planeswalker_types: fn() -> Result(Catalog(String), ClientError(e)),
+    get_spell_types: fn() -> Result(Catalog(String), ClientError(e)),
+    get_powers: fn() -> Result(Catalog(String), ClientError(e)),
+    get_toughnesses: fn() -> Result(Catalog(String), ClientError(e)),
+    get_loyalties: fn() -> Result(Catalog(String), ClientError(e)),
+    get_keyword_abilities: fn() -> Result(Catalog(String), ClientError(e)),
+    get_keyword_actions: fn() -> Result(Catalog(String), ClientError(e)),
+    get_ability_words: fn() -> Result(Catalog(String), ClientError(e)),
+    get_flavor_words: fn() -> Result(Catalog(String), ClientError(e)),
+    get_watermarks: fn() -> Result(Catalog(String), ClientError(e)),
+  )
+}
+
+/// Build a `Client` bound to the given `Requester`, so you don't have to
+/// pass one to every call: `let catalogs = catalogs.new(httpc.send)` then
+/// `catalogs.get_card_names()`.
+pub fn new(requester: Requester(e)) -> Client(e) {
+  Client(
+    get_card_names: fn() { get_card_names(requester) },
+    get_artist_names: fn() { get_artist_names(requester) },
+    get_word_bank: fn() { get_word_bank(requester) },
+    get_supertypes: fn() { get_supertypes(requester) },
+    get_card_types: fn() { get_card_types(requester) },
+    get_artifact_types: fn() { get_artifact_types(requester) },
+    get_battle_types: fn() { get_battle_types(requester) },
+    get_creature_types: fn() { get_creature_types(requester) },
+    get_enchantment_types: fn() { get_enchantment_types(requester) },
+    get_land_types: fn() { get_land_types(requester) },
+    get_planeswalker_types: fn() { get_planeswalker_types(requester) },
+    get_spell_types: fn() { get_spell_types(requester) },
+    get_powers: fn() { get_powers(requester) },
+    get_toughnesses: fn() { get_toughnesses(requester) },
+    get_loyalties: fn() { get_loyalties(requester) },
+    get_keyword_abilities: fn() { get_keyword_abilities(requester) },
+    get_keyword_actions: fn() { get_keyword_actions(requester) },
+    get_ability_words: fn() { get_ability_words(requester) },
+    get_flavor_words: fn() { get_flavor_words(requester) },
+    get_watermarks: fn() { get_watermarks(requester) },
+  )
 }

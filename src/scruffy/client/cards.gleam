@@ -3,7 +3,9 @@
 //// Each function builds its request with `scruffy/client/request` and
 //// sends it with the `client.Requester` you provide, so what comes back
 //// is already the decoded object -- or a `client.ClientError` describing
-//// what went wrong.
+//// what went wrong. Call `new` once with your `Requester` to get a
+//// `Client` back with all of them already wired up, if you'd rather not
+//// pass one at every call site.
 ////
 //// See https://scryfall.com/docs/api/cards for the upstream reference.
 
@@ -401,4 +403,59 @@ pub fn get_card_by_id(
 ) -> Result(Card, ClientError(e)) {
   request.new(http.Get, ["cards", id])
   |> client.send(using: requester, then: card.card_schema())
+}
+
+/// Every function above, already wired up to a `Requester` -- see `new`.
+pub type Client(e) {
+  Client(
+    get_cards_manifest: fn() -> Result(ScryfallList(Card), ClientError(e)),
+    search_cards: fn(String, SearchOptions) ->
+      Result(ScryfallList(Card), ClientError(e)),
+    get_card_by_name: fn(NameQuery, Option(String)) ->
+      Result(Card, ClientError(e)),
+    autocomplete_card_name: fn(String, Option(Bool)) ->
+      Result(Catalog(String), ClientError(e)),
+    get_random_card: fn(Option(String)) -> Result(Card, ClientError(e)),
+    get_card_collection: fn(List(CardIdentifier)) ->
+      Result(CardCollection, ClientError(e)),
+    get_card_by_set_and_number: fn(String, String, Option(Language)) ->
+      Result(Card, ClientError(e)),
+    get_card_by_multiverse_id: fn(Int) -> Result(Card, ClientError(e)),
+    get_card_by_mtgo_id: fn(Int) -> Result(Card, ClientError(e)),
+    get_card_by_arena_id: fn(Int) -> Result(Card, ClientError(e)),
+    get_card_by_tcgplayer_id: fn(Int) -> Result(Card, ClientError(e)),
+    get_card_by_cardmarket_id: fn(Int) -> Result(Card, ClientError(e)),
+    get_card_by_id: fn(Uuid) -> Result(Card, ClientError(e)),
+  )
+}
+
+/// Build a `Client` bound to the given `Requester`, so you don't have to
+/// pass one to every call: `let cards = cards.new(httpc.send)` then
+/// `cards.get_card_by_id(id)`.
+pub fn new(requester: Requester(e)) -> Client(e) {
+  Client(
+    get_cards_manifest: fn() { get_cards_manifest(requester) },
+    search_cards: fn(q, options) { search_cards(requester, q, options) },
+    get_card_by_name: fn(query, set) { get_card_by_name(requester, query, set) },
+    autocomplete_card_name: fn(q, include_extras) {
+      autocomplete_card_name(requester, q, include_extras)
+    },
+    get_random_card: fn(q) { get_random_card(requester, q) },
+    get_card_collection: fn(identifiers) {
+      get_card_collection(requester, identifiers)
+    },
+    get_card_by_set_and_number: fn(set, collector_number, lang) {
+      get_card_by_set_and_number(requester, set, collector_number, lang)
+    },
+    get_card_by_multiverse_id: fn(id) {
+      get_card_by_multiverse_id(requester, id)
+    },
+    get_card_by_mtgo_id: fn(id) { get_card_by_mtgo_id(requester, id) },
+    get_card_by_arena_id: fn(id) { get_card_by_arena_id(requester, id) },
+    get_card_by_tcgplayer_id: fn(id) { get_card_by_tcgplayer_id(requester, id) },
+    get_card_by_cardmarket_id: fn(id) {
+      get_card_by_cardmarket_id(requester, id)
+    },
+    get_card_by_id: fn(id) { get_card_by_id(requester, id) },
+  )
 }
