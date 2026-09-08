@@ -1,63 +1,53 @@
-//// Functions for calling Scryfall's Card Migrations endpoints.
+//// Requests and response decoders for Scryfall's Card Migrations endpoints.
 ////
-//// Each function builds its request with `scruffy/client/request` and
-//// sends it with the `client.Requester` you provide, so what comes back
-//// is already the decoded object -- or a `client.ClientError` describing
-//// what went wrong. Call `new` once with your `Requester` to get a
-//// `Client` back with both of them already wired up, if you'd rather not
-//// pass one at every call site.
+//// Build a request with one of the `*_request` functions below, send it
+//// with your own HTTP client, then decode its response with the matching
+//// `*_response` function.
 ////
 //// See https://scryfall.com/docs/api/migrations for the upstream reference.
 
 import gleam/http
+import gleam/http/request.{type Request} as http_request
+import gleam/http/response.{type Response}
 import gleam/int
 import gleam/option.{type Option}
-import scruffy/client.{type ClientError, type Requester}
+import scruffy/client.{type ClientError}
 import scruffy/client/request
 import scruffy/common.{type Uuid}
 import scruffy/migrations.{type CardMigration}
 import scruffy/scryfall_list.{type ScryfallList}
 
-/// List Scryfall's card migrations, paginated and ordered with the most
-/// recently performed migration first.
-pub fn list_migrations(
-  requester: Requester(e),
-  page: Option(Int),
-) -> Result(ScryfallList(CardMigration), ClientError(e)) {
+/// Build a request to list Scryfall's card migrations, paginated and
+/// ordered with the most recently performed migration first. Pair the
+/// response with `migration_list_response`.
+pub fn list_migrations_request(page: Option(Int)) -> Request(String) {
   request.new(http.Get, ["migrations"])
   |> request.with_query([#("page", option.map(page, int.to_string))])
-  |> client.send(
-    using: requester,
+}
+
+/// Decode a response as a `ScryfallList(CardMigration)`. Pairs with
+/// `list_migrations_request`.
+pub fn migration_list_response(
+  resp: Response(String),
+) -> Result(ScryfallList(CardMigration), ClientError) {
+  client.decode_response(
+    resp,
     then: scryfall_list.scryfall_list_schema(
       of: migrations.card_migration_schema(),
     ),
   )
 }
 
-/// Get a single card migration by its Scryfall migration ID.
-pub fn get_migration(
-  requester: Requester(e),
-  id: Uuid,
-) -> Result(CardMigration, ClientError(e)) {
+/// Build a request for a single card migration by its Scryfall migration
+/// ID. Pair the response with `migration_response`.
+pub fn get_migration_request(id: Uuid) -> Request(String) {
   request.new(http.Get, ["migrations", id])
-  |> client.send(using: requester, then: migrations.card_migration_schema())
 }
 
-/// Both functions above, already wired up to a `Requester` -- see `new`.
-pub type Client(e) {
-  Client(
-    list_migrations: fn(Option(Int)) ->
-      Result(ScryfallList(CardMigration), ClientError(e)),
-    get_migration: fn(Uuid) -> Result(CardMigration, ClientError(e)),
-  )
-}
-
-/// Build a `Client` bound to the given `Requester`, so you don't have to
-/// pass one to every call: `let migrations = migrations.new(httpc.send)`
-/// then `migrations.list_migrations(option.None)`.
-pub fn new(requester: Requester(e)) -> Client(e) {
-  Client(
-    list_migrations: fn(page) { list_migrations(requester, page) },
-    get_migration: fn(id) { get_migration(requester, id) },
-  )
+/// Decode a response as a single `CardMigration`. Pairs with
+/// `get_migration_request`.
+pub fn migration_response(
+  resp: Response(String),
+) -> Result(CardMigration, ClientError) {
+  client.decode_response(resp, then: migrations.card_migration_schema())
 }
