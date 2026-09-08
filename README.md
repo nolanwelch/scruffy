@@ -4,7 +4,7 @@
 [![Hex Docs](https://img.shields.io/badge/hex-docs-ffaff3)](https://hexdocs.pm/scruffy/)
 
 A Gleam client for the [Scryfall](https://scryfall.com/docs/api) Magic: The
-Gathering API. Runs on both of Gleam's targets, Erlang and JavaScript.
+Gathering API.
 
 ## Status
 
@@ -28,12 +28,11 @@ gleam add scruffy@1
 
 ## Usage
 
-`scruffy` never picks an HTTP client for you -- that's what keeps it usable
-from both targets, synchronous or Promise-based alike. Build a request with
-a `*_request` function, send it with whatever HTTP client suits your
-project, and decode the response with the matching `*_response` function.
-On Erlang, that HTTP client can be
-[`gleam_httpc`](https://hexdocs.pm/gleam_httpc/)'s `send`:
+`scruffy` never picks an HTTP client for you. Build a request with a
+`*_request` function, send it with whatever HTTP client suits your project,
+and decode the response with the matching `*_response` function. On Erlang,
+that HTTP client can be [`gleam_httpc`](https://hexdocs.pm/gleam_httpc/)'s
+`send`:
 
 ```gleam
 import gleam/httpc
@@ -59,10 +58,9 @@ pub fn main() -> Nil {
 }
 ```
 
-On the JavaScript target, where a client such as
-[`gleam_fetch`](https://hexdocs.pm/gleam_fetch/) hands back a `Promise`
-instead, the same two functions still work -- `await` the response between
-them:
+The same two functions work with a Promise-based client too (e.g.
+[`gleam_fetch`](https://hexdocs.pm/gleam_fetch/) on the JavaScript target)
+-- just `await` the response between them:
 
 ```gleam
 use resp <- promise.try_await(fetch.send(cards.get_card_by_id_request(id)))
