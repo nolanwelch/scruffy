@@ -1,5 +1,5 @@
 name = "scruffy"
-version = "1.0.0"
+version = "2.0.0"
 description = "A Gleam client for the Scryfall Magic: The Gathering API"
 licences = ["MIT"]
 repository = { type = "github", user = "nolanwelch", repo = "scruffy" }
