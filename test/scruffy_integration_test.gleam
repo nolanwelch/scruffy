@@ -43,7 +43,8 @@ const nonexistent_id = "11111111-1111-4111-8111-111111111111"
 
 @target(erlang)
 pub fn get_card_by_id_test() {
-  let assert Ok(resp) = cards.get_card_by_id_request(black_lotus_id) |> httpc.send
+  let assert Ok(resp) =
+    cards.get_card_by_id_request(black_lotus_id) |> httpc.send
   let assert Ok(c) = cards.card_response(resp)
   assert c.name == "Black Lotus"
   assert c.id == black_lotus_id
@@ -51,7 +52,8 @@ pub fn get_card_by_id_test() {
 
 @target(erlang)
 pub fn get_card_by_id_not_found_test() {
-  let assert Ok(resp) = cards.get_card_by_id_request(nonexistent_id) |> httpc.send
+  let assert Ok(resp) =
+    cards.get_card_by_id_request(nonexistent_id) |> httpc.send
   let assert Error(client.ApiError(err)) = cards.card_response(resp)
   assert err.status == 404
   assert err.code == "not_found"

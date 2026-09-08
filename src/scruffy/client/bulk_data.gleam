@@ -7,7 +7,7 @@
 //// See https://scryfall.com/docs/api/bulk-data for the upstream reference.
 
 import gleam/http
-import gleam/http/request.{type Request} as http_request
+import gleam/http/request.{type Request} as _
 import gleam/http/response.{type Response}
 import scruffy/bulk_data.{type BulkData, type BulkDataType}
 import scruffy/client.{type ClientError}

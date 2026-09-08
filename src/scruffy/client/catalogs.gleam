@@ -9,7 +9,7 @@
 //// See https://scryfall.com/docs/api/catalogs for the upstream reference.
 
 import gleam/http
-import gleam/http/request.{type Request} as http_request
+import gleam/http/request.{type Request} as _
 import gleam/http/response.{type Response}
 import glon
 import scruffy/catalog.{type Catalog}
