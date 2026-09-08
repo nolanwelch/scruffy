@@ -16,11 +16,11 @@
 //// functions read as a pipeline built from these two pieces, e.g.:
 ////
 //// ```gleam
-//// pub fn get_card_by_id(id: Uuid) -> Request(String) {
+//// pub fn get_card_by_id_request(id: Uuid) -> Request(String) {
 ////   request.new(http.Get, ["cards", id])
 //// }
 ////
-//// pub fn autocomplete_card_name(
+//// pub fn autocomplete_card_name_request(
 ////   q: String,
 ////   include_extras: Option(Bool),
 //// ) -> Request(String) {

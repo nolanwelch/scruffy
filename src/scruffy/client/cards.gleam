@@ -1,22 +1,25 @@
-//// Functions for calling Scryfall's Cards endpoints.
+//// Requests and response decoders for Scryfall's Cards endpoints.
 ////
-//// Each function builds its request with `scruffy/client/request` and
-//// sends it with the `client.Requester` you provide, so what comes back
-//// is already the decoded object -- or a `client.ClientError` describing
-//// what went wrong. Call `new` once with your `Requester` to get a
-//// `Client` back with all of them already wired up, if you'd rather not
-//// pass one at every call site.
+//// Each endpoint is a pair of plain functions: a `*_request` that builds
+//// the `Request(String)` to send, and a `*_response` that decodes the
+//// `Response(String)` you got back into a `Card` (or the handful of
+//// endpoints that return something else) -- or a `client.ClientError`
+//// describing what went wrong. Several endpoints below share a
+//// `*_response` function since they decode the same shape; the doc comment
+//// on each `*_request` says which one to pair it with.
 ////
 //// See https://scryfall.com/docs/api/cards for the upstream reference.
 
 import gleam/http
+import gleam/http/request.{type Request} as _
+import gleam/http/response.{type Response}
 import gleam/int
 import gleam/json.{type Json}
 import gleam/option.{type Option}
 import glon
 import scruffy/card.{type Card}
 import scruffy/catalog.{type Catalog}
-import scruffy/client.{type ClientError, type Requester}
+import scruffy/client.{type ClientError}
 import scruffy/client/request
 import scruffy/common.{type Uuid}
 import scruffy/language.{type Language}
@@ -98,7 +101,7 @@ fn bool_to_string(b: Bool) -> String {
   }
 }
 
-/// Optional parameters accepted by `search_cards`.
+/// Optional parameters accepted by `search_cards_request`.
 pub type SearchOptions {
   SearchOptions(
     unique: Option(UniqueMode),
@@ -111,23 +114,35 @@ pub type SearchOptions {
   )
 }
 
-/// Get a lightweight manifest of every card Scryfall has on file.
-pub fn get_cards_manifest(
-  requester: Requester(e),
-) -> Result(ScryfallList(Card), ClientError(e)) {
-  request.new(http.Get, ["cards"])
-  |> client.send(
-    using: requester,
+/// Decode a response as a `ScryfallList(Card)`. Pairs with
+/// `get_cards_manifest_request` and `search_cards_request`.
+pub fn card_list_response(
+  resp: Response(String),
+) -> Result(ScryfallList(Card), ClientError) {
+  client.decode_response(
+    resp,
     then: scryfall_list.scryfall_list_schema(of: card.card_schema()),
   )
 }
 
-/// Search for cards using Scryfall's full-text search syntax.
-pub fn search_cards(
-  requester: Requester(e),
+/// Decode a response as a single `Card`. Pairs with every `get_card_by_*`
+/// and `get_card_by_name_request`/`get_random_card_request` below.
+pub fn card_response(resp: Response(String)) -> Result(Card, ClientError) {
+  client.decode_response(resp, then: card.card_schema())
+}
+
+/// Build a request for a lightweight manifest of every card Scryfall has on
+/// file. Pair the response with `card_list_response`.
+pub fn get_cards_manifest_request() -> Request(String) {
+  request.new(http.Get, ["cards"])
+}
+
+/// Build a request to search for cards using Scryfall's full-text search
+/// syntax. Pair the response with `card_list_response`.
+pub fn search_cards_request(
   q: String,
   options: SearchOptions,
-) -> Result(ScryfallList(Card), ClientError(e)) {
+) -> Request(String) {
   request.new(http.Get, ["cards", "search"])
   |> request.with_query([
     #("q", option.Some(q)),
@@ -145,10 +160,6 @@ pub fn search_cards(
     ),
     #("page", option.map(options.page, int.to_string)),
   ])
-  |> client.send(
-    using: requester,
-    then: scryfall_list.scryfall_list_schema(of: card.card_schema()),
-  )
 }
 
 /// A way of identifying a card by name, either exactly or through
@@ -158,12 +169,12 @@ pub type NameQuery {
   Fuzzy(String)
 }
 
-/// Get a single card by name, optionally scoped to a particular set.
-pub fn get_card_by_name(
-  requester: Requester(e),
+/// Build a request for a single card by name, optionally scoped to a
+/// particular set. Pair the response with `card_response`.
+pub fn get_card_by_name_request(
   query: NameQuery,
   set: Option(String),
-) -> Result(Card, ClientError(e)) {
+) -> Request(String) {
   let name_param = case query {
     Exact(name) -> #("exact", option.Some(name))
     Fuzzy(name) -> #("fuzzy", option.Some(name))
@@ -171,38 +182,38 @@ pub fn get_card_by_name(
 
   request.new(http.Get, ["cards", "named"])
   |> request.with_query([name_param, #("set", set)])
-  |> client.send(using: requester, then: card.card_schema())
 }
 
-/// Get a Catalog of Magic-related word fragments that can be used as the
-/// start of a full card name, for use in a typeahead search bar.
-pub fn autocomplete_card_name(
-  requester: Requester(e),
+/// Build a request for a Catalog of Magic-related word fragments that can
+/// be used as the start of a full card name, for use in a typeahead search
+/// bar.
+pub fn autocomplete_card_name_request(
   q: String,
   include_extras: Option(Bool),
-) -> Result(Catalog(String), ClientError(e)) {
+) -> Request(String) {
   request.new(http.Get, ["cards", "autocomplete"])
   |> request.with_query([
     #("q", option.Some(q)),
     #("include_extras", option.map(include_extras, bool_to_string)),
   ])
-  |> client.send(
-    using: requester,
-    then: catalog.catalog_schema(of: glon.string()),
-  )
 }
 
-/// Get a random card, optionally scoped to cards matching a search query.
-pub fn get_random_card(
-  requester: Requester(e),
-  q: Option(String),
-) -> Result(Card, ClientError(e)) {
+/// Decode a response as a `Catalog(String)`. Pairs with
+/// `autocomplete_card_name_request`.
+pub fn autocomplete_card_name_response(
+  resp: Response(String),
+) -> Result(Catalog(String), ClientError) {
+  client.decode_response(resp, then: catalog.catalog_schema(of: glon.string()))
+}
+
+/// Build a request for a random card, optionally scoped to cards matching a
+/// search query. Pair the response with `card_response`.
+pub fn get_random_card_request(q: Option(String)) -> Request(String) {
   request.new(http.Get, ["cards", "random"])
   |> request.with_query([#("q", q)])
-  |> client.send(using: requester, then: card.card_schema())
 }
 
-/// A way of identifying a single card within a `get_card_collection`
+/// A way of identifying a single card within a `get_card_collection_request`
 /// request.
 pub type CardIdentifier {
   IdentifierById(Uuid)
@@ -278,13 +289,13 @@ fn card_identifier_schema() -> glon.JsonSchema(CardIdentifier) {
   ])
 }
 
-/// The response to a `get_card_collection` request: the cards that were
-/// found, plus any identifiers that couldn't be matched to a card.
+/// The response to a `get_card_collection_request` request: the cards that
+/// were found, plus any identifiers that couldn't be matched to a card.
 pub type CardCollection {
   CardCollection(data: List(Card), not_found: List(CardIdentifier))
 }
 
-pub fn card_collection_schema() -> glon.JsonSchema(CardCollection) {
+fn card_collection_schema() -> glon.JsonSchema(CardCollection) {
   use data <- glon.field("data", glon.array(of: card.card_schema()))
   use not_found <- glon.field(
     "not_found",
@@ -293,12 +304,12 @@ pub fn card_collection_schema() -> glon.JsonSchema(CardCollection) {
   glon.success(CardCollection(data:, not_found:))
 }
 
-/// Get a list of up to 75 cards at once, identified in bulk by ID, name, or
-/// set/collector number.
-pub fn get_card_collection(
-  requester: Requester(e),
+/// Build a request for up to 75 cards at once, identified in bulk by ID,
+/// name, or set/collector number. Pair the response with
+/// `card_collection_response`.
+pub fn get_card_collection_request(
   identifiers: List(CardIdentifier),
-) -> Result(CardCollection, ClientError(e)) {
+) -> Request(String) {
   let body =
     json.object([
       #("identifiers", json.array(identifiers, of: card_identifier_to_json)),
@@ -306,7 +317,14 @@ pub fn get_card_collection(
 
   request.new(http.Post, ["cards", "collection"])
   |> request.with_json_body(body)
-  |> client.send(using: requester, then: card_collection_schema())
+}
+
+/// Decode a response as a `CardCollection`. Pairs with
+/// `get_card_collection_request`.
+pub fn card_collection_response(
+  resp: Response(String),
+) -> Result(CardCollection, ClientError) {
+  client.decode_response(resp, then: card_collection_schema())
 }
 
 fn language_to_code(l: Language) -> String {
@@ -333,129 +351,54 @@ fn language_to_code(l: Language) -> String {
   }
 }
 
-/// Get a single card by its set code, collector number, and (optionally) a
-/// specific language.
-pub fn get_card_by_set_and_number(
-  requester: Requester(e),
+/// Build a request for a single card by its set code, collector number, and
+/// (optionally) a specific language. Pair the response with
+/// `card_response`.
+pub fn get_card_by_set_and_number_request(
   set: String,
   collector_number: String,
   lang: Option(Language),
-) -> Result(Card, ClientError(e)) {
+) -> Request(String) {
   let path = case lang {
     option.Some(l) -> ["cards", set, collector_number, language_to_code(l)]
     option.None -> ["cards", set, collector_number]
   }
 
   request.new(http.Get, path)
-  |> client.send(using: requester, then: card.card_schema())
 }
 
-/// Get a single card by its multiverse ID, as assigned by Wizards'
-/// Gatherer.
-pub fn get_card_by_multiverse_id(
-  requester: Requester(e),
-  id: Int,
-) -> Result(Card, ClientError(e)) {
+/// Build a request for a single card by its multiverse ID, as assigned by
+/// Wizards' Gatherer. Pair the response with `card_response`.
+pub fn get_card_by_multiverse_id_request(id: Int) -> Request(String) {
   request.new(http.Get, ["cards", "multiverse", int.to_string(id)])
-  |> client.send(using: requester, then: card.card_schema())
 }
 
-/// Get a single card by its Magic Online ID.
-pub fn get_card_by_mtgo_id(
-  requester: Requester(e),
-  id: Int,
-) -> Result(Card, ClientError(e)) {
+/// Build a request for a single card by its Magic Online ID. Pair the
+/// response with `card_response`.
+pub fn get_card_by_mtgo_id_request(id: Int) -> Request(String) {
   request.new(http.Get, ["cards", "mtgo", int.to_string(id)])
-  |> client.send(using: requester, then: card.card_schema())
 }
 
-/// Get a single card by its MTG Arena ID.
-pub fn get_card_by_arena_id(
-  requester: Requester(e),
-  id: Int,
-) -> Result(Card, ClientError(e)) {
+/// Build a request for a single card by its MTG Arena ID. Pair the response
+/// with `card_response`.
+pub fn get_card_by_arena_id_request(id: Int) -> Request(String) {
   request.new(http.Get, ["cards", "arena", int.to_string(id)])
-  |> client.send(using: requester, then: card.card_schema())
 }
 
-/// Get a single card by its TCGplayer product ID.
-pub fn get_card_by_tcgplayer_id(
-  requester: Requester(e),
-  id: Int,
-) -> Result(Card, ClientError(e)) {
+/// Build a request for a single card by its TCGplayer product ID. Pair the
+/// response with `card_response`.
+pub fn get_card_by_tcgplayer_id_request(id: Int) -> Request(String) {
   request.new(http.Get, ["cards", "tcgplayer", int.to_string(id)])
-  |> client.send(using: requester, then: card.card_schema())
 }
 
-/// Get a single card by its Cardmarket product ID.
-pub fn get_card_by_cardmarket_id(
-  requester: Requester(e),
-  id: Int,
-) -> Result(Card, ClientError(e)) {
+/// Build a request for a single card by its Cardmarket product ID. Pair the
+/// response with `card_response`.
+pub fn get_card_by_cardmarket_id_request(id: Int) -> Request(String) {
   request.new(http.Get, ["cards", "cardmarket", int.to_string(id)])
-  |> client.send(using: requester, then: card.card_schema())
 }
 
-/// Get a single card by its Scryfall ID.
-pub fn get_card_by_id(
-  requester: Requester(e),
-  id: Uuid,
-) -> Result(Card, ClientError(e)) {
+/// Build a request for a single card by its Scryfall ID. Pair the response
+/// with `card_response`.
+pub fn get_card_by_id_request(id: Uuid) -> Request(String) {
   request.new(http.Get, ["cards", id])
-  |> client.send(using: requester, then: card.card_schema())
-}
-
-/// Every function above, already wired up to a `Requester` -- see `new`.
-pub type Client(e) {
-  Client(
-    get_cards_manifest: fn() -> Result(ScryfallList(Card), ClientError(e)),
-    search_cards: fn(String, SearchOptions) ->
-      Result(ScryfallList(Card), ClientError(e)),
-    get_card_by_name: fn(NameQuery, Option(String)) ->
-      Result(Card, ClientError(e)),
-    autocomplete_card_name: fn(String, Option(Bool)) ->
-      Result(Catalog(String), ClientError(e)),
-    get_random_card: fn(Option(String)) -> Result(Card, ClientError(e)),
-    get_card_collection: fn(List(CardIdentifier)) ->
-      Result(CardCollection, ClientError(e)),
-    get_card_by_set_and_number: fn(String, String, Option(Language)) ->
-      Result(Card, ClientError(e)),
-    get_card_by_multiverse_id: fn(Int) -> Result(Card, ClientError(e)),
-    get_card_by_mtgo_id: fn(Int) -> Result(Card, ClientError(e)),
-    get_card_by_arena_id: fn(Int) -> Result(Card, ClientError(e)),
-    get_card_by_tcgplayer_id: fn(Int) -> Result(Card, ClientError(e)),
-    get_card_by_cardmarket_id: fn(Int) -> Result(Card, ClientError(e)),
-    get_card_by_id: fn(Uuid) -> Result(Card, ClientError(e)),
-  )
-}
-
-/// Build a `Client` bound to the given `Requester`, so you don't have to
-/// pass one to every call: `let cards = cards.new(httpc.send)` then
-/// `cards.get_card_by_id(id)`.
-pub fn new(requester: Requester(e)) -> Client(e) {
-  Client(
-    get_cards_manifest: fn() { get_cards_manifest(requester) },
-    search_cards: fn(q, options) { search_cards(requester, q, options) },
-    get_card_by_name: fn(query, set) { get_card_by_name(requester, query, set) },
-    autocomplete_card_name: fn(q, include_extras) {
-      autocomplete_card_name(requester, q, include_extras)
-    },
-    get_random_card: fn(q) { get_random_card(requester, q) },
-    get_card_collection: fn(identifiers) {
-      get_card_collection(requester, identifiers)
-    },
-    get_card_by_set_and_number: fn(set, collector_number, lang) {
-      get_card_by_set_and_number(requester, set, collector_number, lang)
-    },
-    get_card_by_multiverse_id: fn(id) {
-      get_card_by_multiverse_id(requester, id)
-    },
-    get_card_by_mtgo_id: fn(id) { get_card_by_mtgo_id(requester, id) },
-    get_card_by_arena_id: fn(id) { get_card_by_arena_id(requester, id) },
-    get_card_by_tcgplayer_id: fn(id) { get_card_by_tcgplayer_id(requester, id) },
-    get_card_by_cardmarket_id: fn(id) {
-      get_card_by_cardmarket_id(requester, id)
-    },
-    get_card_by_id: fn(id) { get_card_by_id(requester, id) },
-  )
 }
